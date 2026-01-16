@@ -155,6 +155,13 @@ module frontendWebApp 'modules/webapp.bicep' = {
 }
 
 // ============ OUTPUTS ============
+// Required outputs for azd service-to-resource mapping
+@description('Frontend Web App resource name (for azd deploy)')
+output AZURE_WEB_APP_NAME_FRONTEND string = frontendAppName
+
+@description('Backend Web App resource name (for azd deploy)')
+output AZURE_WEB_APP_NAME_BACKEND string = backendAppName
+
 @description('Frontend application URL')
 output frontendUrl string = frontendWebApp.outputs.webAppUrl
 

@@ -1,0 +1,21 @@
+﻿name: copilot-azure-demo
+
+services:
+  frontend:
+    project: services/frontend
+    language: js
+    host: appservice
+
+  backend:
+    project: services/backend
+    language: js
+    host: appservice
+
+infra:
+  provider: bicep
+  path: infra
+
+hooks:
+  postprovision:
+    shell: pwsh
+    run: ./scripts/azd-post-provision.ps1

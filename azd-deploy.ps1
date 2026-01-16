@@ -65,25 +65,67 @@ Write-Host "  Location:        eastus"
 Write-Host "  Resource Group:  rg-copilot-demo"
 Write-Host ""
 
-# Build azd command
-$azdCmd = @(
-    "up",
-    "--parameter", "sqlAdminPrincipalId=$adminObjectId",
-    "--parameter", "sqlAdminLogin=$adminUpn"
-)
+# Update parameters.json with the resolved SQL admin details
+$parametersPath = "infra/parameters.json"
 
-if ($ProvisionOnly) {
-    $azdCmd[0] = "provision"
-    Write-Host "Running: azd provision (infrastructure only, no app deployment)" -ForegroundColor Yellow
+Write-Host "Updating infra/parameters.json with SQL admin details..." -ForegroundColor Cyan
+
+try {
+    $parameters = Get-Content $parametersPath | ConvertFrom-Json
+    $parameters.parameters.sqlAdminPrincipalId.value = $adminObjectId
+    $parameters.parameters.sqlAdminLogin.value = $adminUpn
+    
+    $parameters | ConvertTo-Json -Depth 10 | Set-Content -Path $parametersPath -Encoding UTF8
+    Write-Host "✓ Parameters updated" -ForegroundColor Green
 }
-else {
-    Write-Host "Running: azd up (full deployment)" -ForegroundColor Yellow
+catch {
+    Write-Host "✗ Failed to update parameters.json: $_" -ForegroundColor Red
+    exit 1
 }
 
 Write-Host ""
 
-# Call azd with resolved parameters
-& azd @azdCmd
+# Ensure azd project is initialized
+Write-Host "Checking azd project..." -ForegroundColor Cyan
+$azdDir = ".azure"
+if (-not (Test-Path $azdDir)) {
+    Write-Host "Initializing azd project structure..." -ForegroundColor Cyan
+    
+    # Create .azure directory and environment folder
+    New-Item -ItemType Directory -Path "$azdDir/demo" -Force | Out-Null
+    
+    # Create config.json (azd looks for this to recognize a project)
+    $config = @{
+        version = 1
+        defaultEnvironment = "demo"
+    } | ConvertTo-Json
+    Set-Content -Path "$azdDir/config.json" -Value $config -Encoding UTF8
+    
+    # Create .env file in environment folder
+    Set-Content -Path "$azdDir/demo/.env" -Value "AZURE_ENV_NAME=demo`n" -Encoding UTF8
+    
+    Write-Host "✓ Project structure created" -ForegroundColor Green
+}
+else {
+    Write-Host "✓ Project already initialized" -ForegroundColor Green
+}
+
+Write-Host ""
+
+# Build azd command (no --parameter flags needed)
+if ($ProvisionOnly) {
+    Write-Host "Running: azd provision (infrastructure only, no app deployment)" -ForegroundColor Yellow
+    $azdCmd = "provision"
+}
+else {
+    Write-Host "Running: azd up (full deployment)" -ForegroundColor Yellow
+    $azdCmd = "up"
+}
+
+Write-Host ""
+
+# Call azd
+& azd $azdCmd
 $exitCode = $LASTEXITCODE
 
 if ($exitCode -eq 0) {

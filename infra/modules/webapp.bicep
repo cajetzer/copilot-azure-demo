@@ -75,5 +75,6 @@ resource webAppLogging 'Microsoft.Web/sites/config@2023-01-01' = {
 }
 
 output webAppId string = webApp.id
+output webAppName string = webApp.name
 output defaultHostName string = webApp.properties.defaultHostName
 output webAppUrl string = 'https://${webApp.properties.defaultHostName}'
