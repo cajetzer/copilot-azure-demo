@@ -92,7 +92,7 @@ This project demonstrates how **GitHub Copilot in VS Code's terminal** transform
 
 ```
 copilot-azure-demo/
-├── azd.yaml                          # Azure Developer CLI manifest (defines services, hooks, outputs)
+├── azure.yaml                        # Azure Developer CLI manifest (defines services, hooks, outputs)
 ├── infra/                            # Infrastructure as Code (Bicep)
 │   ├── main.bicep                    # Top-level template (Resource Group scope)
 │   ├── parameters.json               # Default parameters

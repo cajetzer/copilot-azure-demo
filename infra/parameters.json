@@ -6,16 +6,13 @@
       "value": "demo"
     },
     "location": {
-      "value": "eastus"
+      "value": "westus3"
     },
     "appServicePlanSku": {
       "value": "B1"
     },
-    "sqlAdminPrincipalId": {
-      "value": "6407440b-f73d-4308-a907-a21699b1bc11"
-    },
-    "sqlAdminLogin": {
-      "value": "admin@MngEnvMCAP679586.onmicrosoft.com"
+    "resourceGroupName": {
+      "value": "rg-copilot-infra-demo"
     }
   }
 }

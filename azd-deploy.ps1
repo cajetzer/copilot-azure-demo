@@ -56,33 +56,32 @@ catch {
     exit 1
 }
 
+# Read location and resourceGroupName from parameters.json (with defaults)
+$parametersFile = "$PSScriptRoot/infra/parameters.json"
+$location = "eastus"
+$resourceGroupName = "rg-copilot-demo"
+if (Test-Path $parametersFile) {
+    try {
+        $params = Get-Content $parametersFile | ConvertFrom-Json
+        if ($params.parameters.location.value) {
+            $location = $params.parameters.location.value
+        }
+        if ($params.parameters.resourceGroupName.value) {
+            $resourceGroupName = $params.parameters.resourceGroupName.value
+        }
+    }
+    catch {
+        Write-Host "⚠️  Could not parse parameters.json, using defaults" -ForegroundColor Yellow
+    }
+}
+
 Write-Host ""
 Write-Host "Deployment Parameters" -ForegroundColor Cyan
 Write-Host "────────────────────" -ForegroundColor DarkCyan
 Write-Host "  Admin UPN:       $adminUpn"
 Write-Host "  Admin Object ID: $adminObjectId"
-Write-Host "  Location:        eastus"
-Write-Host "  Resource Group:  rg-copilot-demo"
-Write-Host ""
-
-# Update parameters.json with the resolved SQL admin details
-$parametersPath = "infra/parameters.json"
-
-Write-Host "Updating infra/parameters.json with SQL admin details..." -ForegroundColor Cyan
-
-try {
-    $parameters = Get-Content $parametersPath | ConvertFrom-Json
-    $parameters.parameters.sqlAdminPrincipalId.value = $adminObjectId
-    $parameters.parameters.sqlAdminLogin.value = $adminUpn
-    
-    $parameters | ConvertTo-Json -Depth 10 | Set-Content -Path $parametersPath -Encoding UTF8
-    Write-Host "✓ Parameters updated" -ForegroundColor Green
-}
-catch {
-    Write-Host "✗ Failed to update parameters.json: $_" -ForegroundColor Red
-    exit 1
-}
-
+Write-Host "  Location:        $location"
+Write-Host "  Resource Group:  $resourceGroupName"
 Write-Host ""
 
 # Ensure azd project is initialized
@@ -101,14 +100,28 @@ if (-not (Test-Path $azdDir)) {
     } | ConvertTo-Json
     Set-Content -Path "$azdDir/config.json" -Value $config -Encoding UTF8
     
-    # Create .env file in environment folder
-    Set-Content -Path "$azdDir/demo/.env" -Value "AZURE_ENV_NAME=demo`n" -Encoding UTF8
-    
     Write-Host "✓ Project structure created" -ForegroundColor Green
 }
 else {
     Write-Host "✓ Project already initialized" -ForegroundColor Green
 }
+
+# Set azd environment variables so azd doesn't prompt for them
+Write-Host ""
+Write-Host "Setting azd environment parameters..." -ForegroundColor Cyan
+
+# azd stores parameters as AZURE_INFRA_PARAMETERS_<PARAM_NAME> in the environment
+$envFilePath = "$azdDir/demo/.env"
+$envContent = @"
+AZURE_ENV_NAME=demo
+AZURE_LOCATION=$location
+AZURE_RESOURCE_GROUP=$resourceGroupName
+sqlAdminPrincipalId=$adminObjectId
+sqlAdminLogin=$adminUpn
+"@
+
+Set-Content -Path $envFilePath -Value $envContent -Encoding UTF8
+Write-Host "✓ Environment parameters set" -ForegroundColor Green
 
 Write-Host ""
 

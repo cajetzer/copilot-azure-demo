@@ -22,9 +22,11 @@ resource sqlServer 'Microsoft.Sql/servers@2023-02-01-preview' = {
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: true
       login: adminEntraLogin
-      principalId: adminEntraId
+      sid: adminEntraId
+      principalType: 'User'
       tenantId: subscription().tenantId
     }
+    primaryUserAssignedIdentityId: userAssignedIdentityId
     publicNetworkAccess: 'Enabled'
     minimalTlsVersion: '1.2'
   }

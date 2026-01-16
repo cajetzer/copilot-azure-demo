@@ -5,12 +5,16 @@ param runtimeStack string = 'NODE|18-lts'
 param appSettings array = []
 param appInsightsKey string
 param userAssignedIdentityId string
+param serviceName string = ''
 
 // Create the Web App
 resource webApp 'Microsoft.Web/sites@2023-01-01' = {
   name: appName
   location: location
   kind: 'app,linux'
+  tags: {
+    'azd-service-name': serviceName
+  }
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {

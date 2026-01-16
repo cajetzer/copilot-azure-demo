@@ -110,6 +110,7 @@ module backendWebApp 'modules/webapp.bicep' = {
     runtimeStack: 'NODE|18-lts'
     appInsightsKey: appInsights.properties.InstrumentationKey
     userAssignedIdentityId: userAssignedIdentity.id
+    serviceName: 'backend'
     appSettings: [
       {
         name: 'API_URL'
@@ -141,6 +142,7 @@ module frontendWebApp 'modules/webapp.bicep' = {
     runtimeStack: 'NODE|18-lts'
     appInsightsKey: appInsights.properties.InstrumentationKey
     userAssignedIdentityId: userAssignedIdentity.id
+    serviceName: 'frontend'
     appSettings: [
       {
         name: 'API_URL'
