@@ -10,10 +10,10 @@ RESOURCE_GROUP=rg-copilot-demo
 APP_SERVICE_PLAN=asp-copilot-demo
 
 # Web Applications
-FRONTEND_APP=app-frontend-10084
-FRONTEND_URL=https://app-frontend-10084.azurewebsites.net
-BACKEND_APP=app-backend-10084
-BACKEND_URL=https://app-backend-10084.azurewebsites.net
+FRONTEND_APP=app-copilot-demo-frontend-10084
+FRONTEND_URL=https://app-copilot-demo-frontend-10084.azurewebsites.net
+BACKEND_APP=app-copilot-demo-backend-10084
+BACKEND_URL=https://app-copilot-demo-backend-10084.azurewebsites.net
 
 # Database (Azure AD Authentication Only)
 SQL_SERVER=sql-copilot-demo-10084
@@ -26,17 +26,17 @@ APP_INSIGHTS=ai-copilot-demo
 APP_INSIGHTS_KEY=b2ff47a0-6f0c-4349-a740-0f87698d8bcd
 
 # Storage
-STORAGE_ACCOUNT=stcopilot10084
+STORAGE_ACCOUNT=st10084
 
 # ============================================================
 # Quick Demo Commands
 # ============================================================
 
 # Stream frontend logs:
-# az webapp log tail --name app-frontend-10084 --resource-group rg-copilot-demo
+# az webapp log tail --name app-copilot-demo-frontend-10084 --resource-group rg-copilot-demo
 
 # Stream backend logs:
-# az webapp log tail --name app-backend-10084 --resource-group rg-copilot-demo
+# az webapp log tail --name app-copilot-demo-backend-10084 --resource-group rg-copilot-demo
 
 # Query App Insights:
 # az monitor app-insights query --app ai-copilot-demo -g rg-copilot-demo --analytics-query "requests | take 10"
