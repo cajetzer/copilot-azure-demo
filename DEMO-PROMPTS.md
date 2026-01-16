@@ -47,7 +47,8 @@ az webapp list --resource-group rg-copilot-demo --query "[].{Name:name, State:st
 
 **Check SQL server status:**
 ```powershell
-az sql server show --name sql-copilot-demo-10084 --resource-group rg-copilot-demo --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state}" -o table
+# Replace {SUFFIX} with your actual suffix from env-config.txt
+az sql server show --name sql-copilot-demo-{SUFFIX} --resource-group rg-copilot-demo --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state}" -o table
 ```
 *Expected output: State = Ready*
 
@@ -65,7 +66,8 @@ az sql server show --name sql-copilot-demo-10084 --resource-group rg-copilot-dem
 
 **Stream live logs (interactive):**
 ```powershell
-az webapp log tail --name app-frontend-10084 --resource-group rg-copilot-demo
+# Replace {SUFFIX} with your actual suffix from env-config.txt
+az webapp log tail --name app-copilot-demo-frontend-{SUFFIX} --resource-group rg-copilot-demo
 ```
 *Shows: Real-time application logs*
 
@@ -77,8 +79,9 @@ az monitor activity-log list --resource-group rg-copilot-demo --max-events 10 --
 
 **Web app HTTP metrics:**
 ```powershell
+# Replace {SUFFIX} with your actual suffix from env-config.txt
 $subId = az account show --query id -o tsv
-az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/rg-copilot-demo/providers/Microsoft.Web/sites/app-frontend-10084" --metric "Requests" "Http2xx" "Http4xx" --interval PT5M -o table
+az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/rg-copilot-demo/providers/Microsoft.Web/sites/app-copilot-demo-frontend-{SUFFIX}" --metric "Requests" "Http2xx" "Http4xx" --interval PT5M -o table
 ```
 *Shows: Request counts by status code*
 
@@ -161,7 +164,8 @@ if ($LASTEXITCODE -ne 0 -or $result -notmatch '^\s*\{') {
 
 **Check app settings:**
 ```powershell
-az webapp config appsettings list --name app-backend-10084 --resource-group rg-copilot-demo --query "[].{Name:name, Value:value}" -o table
+# Replace {SUFFIX} with your actual suffix from env-config.txt
+az webapp config appsettings list --name app-copilot-demo-backend-{SUFFIX} --resource-group rg-copilot-demo --query "[].{Name:name, Value:value}" -o table
 ```
 *Shows: All configuration including LOG_LEVEL=DEBUG, VERSION=2.1.0*
 
@@ -179,26 +183,30 @@ az webapp config appsettings list --name app-backend-10084 --resource-group rg-c
 
 **SQL DTU metrics:**
 ```powershell
+# Replace {SUFFIX} with your actual suffix from env-config.txt
 $subId = az account show --query id -o tsv
-az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/rg-copilot-demo/providers/Microsoft.Sql/servers/sql-copilot-demo-10084/databases/appdb" --metric "dtu_consumption_percent" --interval PT5M -o table
+az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/rg-copilot-demo/providers/Microsoft.Sql/servers/sql-copilot-demo-{SUFFIX}/databases/appdb" --metric "dtu_consumption_percent" --interval PT5M -o table
 ```
 *Shows: DTU percentage over time (usually 0-1% for idle)*
 
 **SQL Server info:**
 ```powershell
-az sql server show --name sql-copilot-demo-10084 --resource-group rg-copilot-demo --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state, Admin:administrators.login}" -o table
+# Replace {SUFFIX} with your actual suffix from env-config.txt
+az sql server show --name sql-copilot-demo-{SUFFIX} --resource-group rg-copilot-demo --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state, Admin:administrators.login}" -o table
 ```
 *Shows: Server FQDN, Ready state, AD admin*
 
 **Firewall rules:**
 ```powershell
-az sql server firewall-rule list --server sql-copilot-demo-10084 --resource-group rg-copilot-demo -o table
+# Replace {SUFFIX} with your actual suffix from env-config.txt
+az sql server firewall-rule list --server sql-copilot-demo-{SUFFIX} --resource-group rg-copilot-demo -o table
 ```
 *Shows: AllowAzureServices and AllowMyIP rules*
 
 **Database size/usage:**
 ```powershell
-az sql db show --server sql-copilot-demo-10084 --name appdb --resource-group rg-copilot-demo --query "{Name:name, Edition:edition, MaxSize:maxSizeBytes, Status:status}" -o table
+# Replace {SUFFIX} with your actual suffix from env-config.txt
+az sql db show --server sql-copilot-demo-{SUFFIX} --name appdb --resource-group rg-copilot-demo --query "{Name:name, Edition:edition, MaxSize:maxSizeBytes, Status:status}" -o table
 ```
 *Shows: Basic edition, 2GB max, Online status*
 
@@ -216,11 +224,12 @@ az sql db show --server sql-copilot-demo-10084 --name appdb --resource-group rg-
 
 **Compare settings side-by-side:**
 ```powershell
+# Replace {SUFFIX} with your actual suffix from env-config.txt
 Write-Host "=== FRONTEND ===" -ForegroundColor Cyan
-az webapp config appsettings list --name app-frontend-10084 --resource-group rg-copilot-demo --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
+az webapp config appsettings list --name app-copilot-demo-frontend-{SUFFIX} --resource-group rg-copilot-demo --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
 
 Write-Host "`n=== BACKEND ===" -ForegroundColor Cyan  
-az webapp config appsettings list --name app-backend-10084 --resource-group rg-copilot-demo --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
+az webapp config appsettings list --name app-copilot-demo-backend-{SUFFIX} --resource-group rg-copilot-demo --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
 ```
 *Shows these differences:*
 | Setting | Frontend | Backend |
