@@ -109,6 +109,7 @@ $configLines = @(
     "# Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')",
     "",
     "RESOURCE_GROUP=$RESOURCE_GROUP",
+    "APP_SERVICE_PLAN=$APP_SERVICE_PLAN",
     "FRONTEND_APP=$FRONTEND_APP",
     "FRONTEND_URL=https://$FRONTEND_APP.azurewebsites.net",
     "BACKEND_APP=$BACKEND_APP",
