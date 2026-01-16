@@ -18,7 +18,7 @@ $APP_SERVICE_PLAN = "asp-copilot-demo"
 $FRONTEND_APP = "app-copilot-demo-frontend-$SUFFIX"
 $BACKEND_APP = "app-copilot-demo-backend-$SUFFIX"
 $APP_INSIGHTS = "ai-copilot-demo"
-$STORAGE_ACCOUNT = "stcopilotdemo$SUFFIX"
+$STORAGE_ACCOUNT = "st$SUFFIX"
 
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  VS Code + GitHub Copilot Azure Demo Deployment" -ForegroundColor Cyan
