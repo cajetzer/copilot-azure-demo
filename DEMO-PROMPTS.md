@@ -129,7 +129,7 @@ if ($LASTEXITCODE -ne 0 -or $result -notmatch '^\s*\{') {
     Write-Host "⚠️  Query failed. Ensure Application Insights has data. Try running: .\simulate-issues.ps1 -Issue http-errors" -ForegroundColor Yellow
 } else {
     $parsedResult = $result | ConvertFrom-Json
-    if ($parsedResult.tables[0].rows.Count -eq 0) {
+    if ($null -eq $parsedResult.tables -or $parsedResult.tables.Count -eq 0 -or $parsedResult.tables[0].rows.Count -eq 0) {
         Write-Host "ℹ️  No 404 errors found in Application Insights. To generate test data, run: .\simulate-issues.ps1 -Issue http-errors" -ForegroundColor Cyan
     } else {
         $result | ConvertFrom-Json | ConvertTo-Json -Depth 10 | Write-Host
