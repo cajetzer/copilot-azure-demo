@@ -77,7 +77,7 @@ This project demonstrates how **GitHub Copilot in VS Code's terminal** transform
 | SQL Server | `sql-copilot-demo-10084` | Azure SQL logical server (Azure AD auth) |
 | SQL Database | `appdb` | Application database (Basic tier) |
 | Application Insights | `ai-copilot-demo` | Monitoring and tracing |
-| Storage Account | `stcopilot10084` | Logs and diagnostics |
+| Storage Account | `st10084` | Logs and diagnostics |
 
 ### Live URLs
 
