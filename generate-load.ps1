@@ -10,12 +10,26 @@ param(
     [int]$Concurrency = 5
 )
 
-$FRONTEND_URL = "https://app-frontend-10084.azurewebsites.net"
-$BACKEND_URL = "https://app-backend-10084.azurewebsites.net"
-$RESOURCE_GROUP = "rg-copilot-demo"
-$SQL_SERVER = "sql-copilot-demo-10084"
-$SQL_DB = "appdb"
-$APP_INSIGHTS = "ai-copilot-demo"
+# Load configuration from env-config.txt if available
+if (Test-Path "env-config.txt") {
+    $config = Get-Content "env-config.txt" | Where-Object { $_ -match '=' -and $_ -notmatch '^#' }
+    $configHash = @{}
+    foreach ($line in $config) {
+        $parts = $line -split '=', 2
+        $configHash[$parts[0].Trim()] = $parts[1].Trim()
+    }
+    
+    $FRONTEND_URL = $configHash['FRONTEND_URL']
+    $BACKEND_URL = $configHash['BACKEND_URL']
+    $RESOURCE_GROUP = $configHash['RESOURCE_GROUP']
+    $SQL_SERVER = $configHash['SQL_SERVER']
+    $SQL_DB = $configHash['SQL_DATABASE']
+    $APP_INSIGHTS = $configHash['APP_INSIGHTS']
+} else {
+    Write-Host "ERROR: env-config.txt not found!" -ForegroundColor Red
+    Write-Host "Please run deploy.ps1 first to generate the configuration file." -ForegroundColor Yellow
+    exit 1
+}
 
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  Copilot Demo - Load & Issue Generator" -ForegroundColor Cyan

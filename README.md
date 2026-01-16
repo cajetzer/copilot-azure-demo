@@ -72,17 +72,17 @@ This project demonstrates how **GitHub Copilot in VS Code's terminal** transform
 |----------|------|---------|
 | Resource Group | `rg-copilot-demo` | Container for all resources |
 | App Service Plan | `asp-copilot-demo` | Hosts both web apps (B1 tier) |
-| Frontend Web App | `app-frontend-10084` | User-facing web interface |
-| Backend API App | `app-backend-10084` | REST API with SQL connectivity |
+| Frontend Web App | `app-copilot-demo-frontend-10084` | User-facing web interface |
+| Backend API App | `app-copilot-demo-backend-10084` | REST API with SQL connectivity |
 | SQL Server | `sql-copilot-demo-10084` | Azure SQL logical server (Azure AD auth) |
 | SQL Database | `appdb` | Application database (Basic tier) |
 | Application Insights | `ai-copilot-demo` | Monitoring and tracing |
-| Storage Account | `stcopilot10084` | Logs and diagnostics |
+| Storage Account | `st10084` | Logs and diagnostics |
 
 ### Live URLs
 
-- **Frontend**: https://app-frontend-10084.azurewebsites.net
-- **Backend API**: https://app-backend-10084.azurewebsites.net
+- **Frontend**: https://app-copilot-demo-frontend-10084.azurewebsites.net
+- **Backend API**: https://app-copilot-demo-backend-10084.azurewebsites.net
 - **SQL Server**: sql-copilot-demo-10084.database.windows.net
 
 ---
