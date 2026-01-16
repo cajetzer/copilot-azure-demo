@@ -5,6 +5,22 @@
 
 ## BEFORE THE DEMO
 
+### ⚠️ IMPORTANT: Load Environment Configuration First
+```powershell
+# Source the environment configuration (contains actual resource names from your deployment)
+Get-Content env-config.txt | ForEach-Object {
+    if ($_ -match '^([^#][^=]+)=(.+)$') {
+        Set-Variable -Name $matches[1] -Value $matches[2] -Scope Global
+    }
+}
+
+# Verify variables are loaded:
+Write-Host "Resource Group: $RESOURCE_GROUP"
+Write-Host "Frontend App: $FRONTEND_APP"
+Write-Host "Backend App: $BACKEND_APP"
+Write-Host "SQL Server: $SQL_SERVER"
+```
+
 ### Generate Issues to Troubleshoot
 ```powershell
 # Run this 5 minutes before demo to populate data:
@@ -23,24 +39,24 @@
 
 **List all resources:**
 ```powershell
-az resource list --resource-group rg-copilot-demo --query "[].{Name:name, Type:type, Location:location}" -o table
+az resource list --resource-group $RESOURCE_GROUP --query "[].{Name:name, Type:type, Location:location}" -o table
 ```
 *Expected output: Shows 10 resources including web apps, SQL, storage, App Insights*
 
 **Check web app status:**
 ```powershell
-az webapp list --resource-group rg-copilot-demo --query "[].{Name:name, State:state, URL:defaultHostName}" -o table
+az webapp list --resource-group $RESOURCE_GROUP --query "[].{Name:name, State:state, URL:defaultHostName}" -o table
 ```
 *Expected output: Both apps showing "Running" state*
 
 **Check SQL server status:**
 ```powershell
-az sql server show --name sql-copilot-demo-10084 --resource-group rg-copilot-demo --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state}" -o table
+az sql server show --name $SQL_SERVER --resource-group $RESOURCE_GROUP --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state}" -o table
 ```
 *Expected output: State = Ready*
 
 ### COPILOT PROMPTS:
-- "Show me all resources in my Azure resource group rg-copilot-demo"
+- "Show me all resources in my Azure resource group"
 - "Check if my web apps are running"
 - "Is my SQL database online?"
 
@@ -53,20 +69,20 @@ az sql server show --name sql-copilot-demo-10084 --resource-group rg-copilot-dem
 
 **Stream live logs (interactive):**
 ```powershell
-az webapp log tail --name app-frontend-10084 --resource-group rg-copilot-demo
+az webapp log tail --name $FRONTEND_APP --resource-group $RESOURCE_GROUP
 ```
 *Shows: Real-time application logs*
 
 **Check recent activity log:**
 ```powershell
-az monitor activity-log list --resource-group rg-copilot-demo --max-events 10 --query "[].{Time:eventTimestamp, Operation:operationName.localizedValue, Status:status.localizedValue}" -o table
+az monitor activity-log list --resource-group $RESOURCE_GROUP --max-events 10 --query "[].{Time:eventTimestamp, Operation:operationName.localizedValue, Status:status.localizedValue}" -o table
 ```
 *Shows: Recent operations like restarts, config changes*
 
 **Web app HTTP metrics:**
 ```powershell
 $subId = az account show --query id -o tsv
-az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/rg-copilot-demo/providers/Microsoft.Web/sites/app-frontend-10084" --metric "Requests" "Http2xx" "Http4xx" --interval PT5M -o table
+az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$FRONTEND_APP" --metric "Requests" "Http2xx" "Http4xx" --interval PT5M -o table
 ```
 *Shows: Request counts by status code*
 
@@ -84,25 +100,25 @@ az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/rg-copi
 
 **Request summary by status:**
 ```powershell
-az monitor app-insights query --app ai-copilot-demo --resource-group rg-copilot-demo --analytics-query "requests | summarize count() by cloud_RoleName, resultCode | order by count_ desc"
+az monitor app-insights query --app $APP_INSIGHTS --resource-group $RESOURCE_GROUP --analytics-query "requests | summarize count() by cloud_RoleName, resultCode | order by count_ desc"
 ```
 *Shows: Count of 200s, 404s, etc. per app*
 
 **Find 404 errors:**
 ```powershell
-az monitor app-insights query --app ai-copilot-demo --resource-group rg-copilot-demo --analytics-query "requests | where resultCode == '404' | project timestamp, url, duration | order by timestamp desc | take 10"
+az monitor app-insights query --app $APP_INSIGHTS --resource-group $RESOURCE_GROUP --analytics-query "requests | where resultCode == '404' | project timestamp, url, duration | order by timestamp desc | take 10"
 ```
 *Shows: Recent 404 errors with URLs*
 
 **Average response times per app:**
 ```powershell
-az monitor app-insights query --app ai-copilot-demo --resource-group rg-copilot-demo --analytics-query "requests | summarize avgDuration=avg(duration), count=count() by cloud_RoleName | order by avgDuration desc"
+az monitor app-insights query --app $APP_INSIGHTS --resource-group $RESOURCE_GROUP --analytics-query "requests | summarize avgDuration=avg(duration), count=count() by cloud_RoleName | order by avgDuration desc"
 ```
 *Shows: Backend ~33ms, Frontend ~22ms average*
 
 **Check app settings:**
 ```powershell
-az webapp config appsettings list --name app-backend-10084 --resource-group rg-copilot-demo --query "[].{Name:name, Value:value}" -o table
+az webapp config appsettings list --name $BACKEND_APP --resource-group $RESOURCE_GROUP --query "[].{Name:name, Value:value}" -o table
 ```
 *Shows: All configuration including LOG_LEVEL=DEBUG, VERSION=2.1.0*
 
@@ -121,25 +137,25 @@ az webapp config appsettings list --name app-backend-10084 --resource-group rg-c
 **SQL DTU metrics:**
 ```powershell
 $subId = az account show --query id -o tsv
-az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/rg-copilot-demo/providers/Microsoft.Sql/servers/sql-copilot-demo-10084/databases/appdb" --metric "dtu_consumption_percent" --interval PT5M -o table
+az monitor metrics list --resource "/subscriptions/$subId/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Sql/servers/$SQL_SERVER/databases/$SQL_DATABASE" --metric "dtu_consumption_percent" --interval PT5M -o table
 ```
 *Shows: DTU percentage over time (usually 0-1% for idle)*
 
 **SQL Server info:**
 ```powershell
-az sql server show --name sql-copilot-demo-10084 --resource-group rg-copilot-demo --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state, Admin:administrators.login}" -o table
+az sql server show --name $SQL_SERVER --resource-group $RESOURCE_GROUP --query "{Name:name, FQDN:fullyQualifiedDomainName, State:state, Admin:administrators.login}" -o table
 ```
 *Shows: Server FQDN, Ready state, AD admin*
 
 **Firewall rules:**
 ```powershell
-az sql server firewall-rule list --server sql-copilot-demo-10084 --resource-group rg-copilot-demo -o table
+az sql server firewall-rule list --server $SQL_SERVER --resource-group $RESOURCE_GROUP -o table
 ```
 *Shows: AllowAzureServices and AllowMyIP rules*
 
 **Database size/usage:**
 ```powershell
-az sql db show --server sql-copilot-demo-10084 --name appdb --resource-group rg-copilot-demo --query "{Name:name, Edition:edition, MaxSize:maxSizeBytes, Status:status}" -o table
+az sql db show --server $SQL_SERVER --name $SQL_DATABASE --resource-group $RESOURCE_GROUP --query "{Name:name, Edition:edition, MaxSize:maxSizeBytes, Status:status}" -o table
 ```
 *Shows: Basic edition, 2GB max, Online status*
 
@@ -158,10 +174,10 @@ az sql db show --server sql-copilot-demo-10084 --name appdb --resource-group rg-
 **Compare settings side-by-side:**
 ```powershell
 Write-Host "=== FRONTEND ===" -ForegroundColor Cyan
-az webapp config appsettings list --name app-frontend-10084 --resource-group rg-copilot-demo --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
+az webapp config appsettings list --name $FRONTEND_APP --resource-group $RESOURCE_GROUP --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
 
 Write-Host "`n=== BACKEND ===" -ForegroundColor Cyan  
-az webapp config appsettings list --name app-backend-10084 --resource-group rg-copilot-demo --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
+az webapp config appsettings list --name $BACKEND_APP --resource-group $RESOURCE_GROUP --query "[?name=='VERSION' || name=='LOG_LEVEL' || name=='CACHE_ENABLED' || name=='FEATURE_FLAG_V2'].{Name:name, Value:value}" -o table
 ```
 *Shows these differences:*
 | Setting | Frontend | Backend |
@@ -173,7 +189,7 @@ az webapp config appsettings list --name app-backend-10084 --resource-group rg-c
 
 **App Service Plan info:**
 ```powershell
-az appservice plan show --name asp-copilot-demo --resource-group rg-copilot-demo --query "{Name:name, SKU:sku.name, Workers:sku.capacity}" -o table
+az appservice plan show --name asp-copilot-demo --resource-group $RESOURCE_GROUP --query "{Name:name, SKU:sku.name, Workers:sku.capacity}" -o table
 ```
 *Shows: B1 SKU with 1 worker*
 
@@ -191,7 +207,7 @@ az appservice plan show --name asp-copilot-demo --resource-group rg-copilot-demo
 
 **Recent Azure operations:**
 ```powershell
-az monitor activity-log list --resource-group rg-copilot-demo --max-events 15 --query "[].{Time:eventTimestamp, Operation:operationName.localizedValue, Status:status.localizedValue, Caller:caller}" -o table
+az monitor activity-log list --resource-group $RESOURCE_GROUP --max-events 15 --query "[].{Time:eventTimestamp, Operation:operationName.localizedValue, Status:status.localizedValue, Caller:caller}" -o table
 ```
 *Shows: Restart, config updates, deployments with timestamps*
 
@@ -206,28 +222,28 @@ az monitor activity-log list --resource-group rg-copilot-demo --max-events 15 --
 
 ```powershell
 # Environment overview
-az resource list -g rg-copilot-demo -o table
+az resource list -g $RESOURCE_GROUP -o table
 
 # App status
-az webapp list -g rg-copilot-demo --query "[].{Name:name,State:state}" -o table
+az webapp list -g $RESOURCE_GROUP --query "[].{Name:name,State:state}" -o table
 
 # Live logs
-az webapp log tail --name app-backend-10084 -g rg-copilot-demo
+az webapp log tail --name $BACKEND_APP -g $RESOURCE_GROUP
 
 # App Insights - errors
-az monitor app-insights query --app ai-copilot-demo -g rg-copilot-demo --analytics-query "requests | where resultCode != '200' | take 10"
+az monitor app-insights query --app $APP_INSIGHTS -g $RESOURCE_GROUP --analytics-query "requests | where resultCode != '200' | take 10"
 
 # App Insights - performance
-az monitor app-insights query --app ai-copilot-demo -g rg-copilot-demo --analytics-query "requests | summarize avg(duration) by cloud_RoleName"
+az monitor app-insights query --app $APP_INSIGHTS -g $RESOURCE_GROUP --analytics-query "requests | summarize avg(duration) by cloud_RoleName"
 
 # SQL metrics
-az monitor metrics list --resource "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-copilot-demo/providers/Microsoft.Sql/servers/sql-copilot-demo-10084/databases/appdb" --metric "dtu_consumption_percent" -o table
+az monitor metrics list --resource "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Sql/servers/$SQL_SERVER/databases/$SQL_DATABASE" --metric "dtu_consumption_percent" -o table
 
 # Config compare
-az webapp config appsettings list --name app-backend-10084 -g rg-copilot-demo -o table
+az webapp config appsettings list --name $BACKEND_APP -g $RESOURCE_GROUP -o table
 
 # Activity log
-az monitor activity-log list -g rg-copilot-demo --max-events 10 -o table
+az monitor activity-log list -g $RESOURCE_GROUP --max-events 10 -o table
 ```
 
 ---
@@ -239,5 +255,5 @@ az monitor activity-log list -g rg-copilot-demo --max-events 10 -o table
 .\simulate-issues.ps1 -Issue clear-issues
 
 # Or delete everything (stops all charges)
-az group delete --name rg-copilot-demo --yes --no-wait
+az group delete --name $RESOURCE_GROUP --yes --no-wait
 ```
