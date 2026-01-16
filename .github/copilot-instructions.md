@@ -19,10 +19,10 @@ This is an **interactive Azure troubleshooting demonstration** that shows how Gi
 - `infra/modules/sql.bicep` - SQL Server and Database provisioning with Managed Identity and Azure AD authentication
 - `infra/parameters.json` - Default parameter values for local development
 
-**Scripts** (all PowerShell, all from repo root):
-- `deploy.ps1` - **Legacy**; Creates 8 Azure resources via imperative CLI (deprecated; use `azd provision` instead)
-- `simulate-issues.ps1` - Interactive menu or `-Issue` parameter to create observable problems (errors, latency, restarts, config changes)
-- `generate-load.ps1` - Parallel HTTP jobs to populate Application Insights with traffic/error data
+**Scripts** (all PowerShell in `scripts/` folder):
+- `scripts/deploy.ps1` - **Legacy**; Creates 8 Azure resources via imperative CLI (deprecated; use `azd provision` instead)
+- `scripts/simulate-issues.ps1` - Interactive menu or `-Issue` parameter to create observable problems (errors, latency, restarts, config changes)
+- `scripts/generate-load.ps1` - Parallel HTTP jobs to populate Application Insights with traffic/error data
 - `scripts/azd-post-provision.ps1` - Post-provision hook; converts azd outputs to `env-config.txt` format for backwards compatibility
 
 **Configuration**:
@@ -73,27 +73,27 @@ azd deploy
 ```
 - Builds and deploys frontend and backend code to Web Apps
 
-### 3. **Generate Realistic Scenarios** → `simulate-issues.ps1`
+### 3. **Generate Realistic Scenarios** → `scripts/simulate-issues.ps1`
 ```powershell
-.\simulate-issues.ps1 -Issue http-errors        # 404/500 errors
-.\simulate-issues.ps1 -Issue high-latency       # Slow responses
-.\simulate-issues.ps1 -Issue app-restart        # Brief outage
-.\simulate-issues.ps1 -Issue config-change      # Settings modification
-.\simulate-issues.ps1 -Issue all-issues         # Multiple issues
-.\simulate-issues.ps1 -Issue clear-issues       # Reset
+.\scripts\simulate-issues.ps1 -Issue http-errors        # 404/500 errors
+.\scripts\simulate-issues.ps1 -Issue high-latency       # Slow responses
+.\scripts\simulate-issues.ps1 -Issue app-restart        # Brief outage
+.\scripts\simulate-issues.ps1 -Issue config-change      # Settings modification
+.\scripts\simulate-issues.ps1 -Issue all-issues         # Multiple issues
+.\scripts\simulate-issues.ps1 -Issue clear-issues       # Reset
 ```
 - Creates observable problems for Copilot to diagnose
 - **Must run 2-5 min before demo** so Application Insights populates data
 - Issues are *temporary* and reversible (except logs which accumulate)
 
-### 4. **Load/Traffic Generation** → `generate-load.ps1`
+### 4. **Load/Traffic Generation** → `scripts/generate-load.ps1`
 ```powershell
-.\generate-load.ps1 -Scenario traffic           # HTTP requests
-.\generate-load.ps1 -Scenario errors            # 404/500s
-.\generate-load.ps1 -Scenario slow              # High-latency requests
-.\generate-load.ps1 -Scenario sql               # Database activity
-.\generate-load.ps1 -Scenario logs              # Log entries
-.\generate-load.ps1 -Scenario all               # All scenarios
+.\scripts\generate-load.ps1 -Scenario traffic           # HTTP requests
+.\scripts\generate-load.ps1 -Scenario errors            # 404/500s
+.\scripts\generate-load.ps1 -Scenario slow              # High-latency requests
+.\scripts\generate-load.ps1 -Scenario sql               # Database activity
+.\scripts\generate-load.ps1 -Scenario logs              # Log entries
+.\scripts\generate-load.ps1 -Scenario all               # All scenarios
 ```
 - Generates activity visible in logs/metrics
 - Used to populate Application Insights before demo (lazy data loading)

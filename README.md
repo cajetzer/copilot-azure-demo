@@ -123,7 +123,7 @@ azd deploy
 
 ```powershell
 # Old method (still supported for backwards compatibility)
-.\deploy.ps1
+.\scripts\deploy.ps1
 ```
 
 ### Generate Issues for Demo
@@ -133,24 +133,24 @@ azd deploy
 # (azd post-provision automatically generates this)
 
 # Interactive menu to simulate issues
-.\simulate-issues.ps1
+.\scripts\simulate-issues.ps1
 
 # Or run specific scenarios:
-.\simulate-issues.ps1 -Issue http-errors    # Generate 404/500 errors
-.\simulate-issues.ps1 -Issue high-latency   # Cause slow responses
-.\simulate-issues.ps1 -Issue config-change  # Modify app settings
-.\simulate-issues.ps1 -Issue all-issues     # Run all simulations
-.\simulate-issues.ps1 -Issue clear-issues   # Reset everything
+.\scripts\simulate-issues.ps1 -Issue http-errors    # Generate 404/500 errors
+.\scripts\simulate-issues.ps1 -Issue high-latency   # Cause slow responses
+.\scripts\simulate-issues.ps1 -Issue config-change  # Modify app settings
+.\scripts\simulate-issues.ps1 -Issue all-issues     # Run all simulations
+.\scripts\simulate-issues.ps1 -Issue clear-issues   # Reset everything
 ```
 
 ### Generate Load/Traffic
 
 ```powershell
 # Generate traffic and activity (populates Application Insights)
-.\generate-load.ps1 -Scenario all          # All scenarios
-.\generate-load.ps1 -Scenario traffic      # HTTP traffic only
-.\generate-load.ps1 -Scenario errors       # Error requests only
-.\generate-load.ps1 -Scenario logs         # Generate log entries
+.\scripts\generate-load.ps1 -Scenario all          # All scenarios
+.\scripts\generate-load.ps1 -Scenario traffic      # HTTP traffic only
+.\scripts\generate-load.ps1 -Scenario errors       # Error requests only
+.\scripts\generate-load.ps1 -Scenario logs         # Generate log entries
 ```
 
 ### Cleanup
