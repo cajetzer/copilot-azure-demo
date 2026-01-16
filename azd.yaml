@@ -17,6 +17,13 @@ services:
 infra:
   path: infra
 
+# Hooks for azd lifecycle events
+hooks:
+  postprovision:
+    shell: pwsh
+    run: ./scripts/azd-post-provision.ps1
+    continueOnError: false
+
 # Environment variables and outputs from provisioning
 env:
   # These will be populated by azd from Bicep outputs

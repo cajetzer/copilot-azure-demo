@@ -1,0 +1,16 @@
+{
+  "name": "copilot-demo-backend",
+  "version": "1.0.0",
+  "description": "Backend API service for Azure troubleshooting demo",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "keywords": ["azure", "copilot", "demo", "api"],
+  "author": "GitHub Copilot",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
