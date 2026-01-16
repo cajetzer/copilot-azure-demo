@@ -10,15 +10,15 @@ $SUFFIX = Get-Random -Maximum 99999
 # Configuration
 $RESOURCE_GROUP = "rg-copilot-demo"
 $LOCATION = "eastus"
-$SQL_SERVER_NAME = "sql-copilot-$SUFFIX"
+$SQL_SERVER_NAME = "sql-copilot-demo-$SUFFIX"
 $SQL_DB_NAME = "appdb"
 $SQL_ADMIN = "sqladmin"
 $SQL_PASSWORD = "CopilotDemo2026!"
 $APP_SERVICE_PLAN = "asp-copilot-demo"
-$FRONTEND_APP = "app-frontend-$SUFFIX"
-$BACKEND_APP = "app-backend-$SUFFIX"
+$FRONTEND_APP = "app-copilot-demo-frontend-$SUFFIX"
+$BACKEND_APP = "app-copilot-demo-backend-$SUFFIX"
 $APP_INSIGHTS = "ai-copilot-demo"
-$STORAGE_ACCOUNT = "stcopilot$SUFFIX"
+$STORAGE_ACCOUNT = "st$SUFFIX"
 
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  VS Code + GitHub Copilot Azure Demo Deployment" -ForegroundColor Cyan
@@ -109,6 +109,7 @@ $configLines = @(
     "# Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')",
     "",
     "RESOURCE_GROUP=$RESOURCE_GROUP",
+    "APP_SERVICE_PLAN=$APP_SERVICE_PLAN",
     "FRONTEND_APP=$FRONTEND_APP",
     "FRONTEND_URL=https://$FRONTEND_APP.azurewebsites.net",
     "BACKEND_APP=$BACKEND_APP",

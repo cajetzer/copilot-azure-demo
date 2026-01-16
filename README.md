@@ -72,17 +72,17 @@ This project demonstrates how **GitHub Copilot in VS Code's terminal** transform
 |----------|------|---------|
 | Resource Group | `rg-copilot-demo` | Container for all resources |
 | App Service Plan | `asp-copilot-demo` | Hosts both web apps (B1 tier) |
-| Frontend Web App | `app-frontend-10084` | User-facing web interface |
-| Backend API App | `app-backend-10084` | REST API with SQL connectivity |
+| Frontend Web App | `app-copilot-demo-frontend-10084` | User-facing web interface |
+| Backend API App | `app-copilot-demo-backend-10084` | REST API with SQL connectivity |
 | SQL Server | `sql-copilot-demo-10084` | Azure SQL logical server (Azure AD auth) |
 | SQL Database | `appdb` | Application database (Basic tier) |
 | Application Insights | `ai-copilot-demo` | Monitoring and tracing |
-| Storage Account | `stcopilot10084` | Logs and diagnostics |
+| Storage Account | `st10084` | Logs and diagnostics |
 
 ### Live URLs
 
-- **Frontend**: https://app-frontend-10084.azurewebsites.net
-- **Backend API**: https://app-backend-10084.azurewebsites.net
+- **Frontend**: https://app-copilot-demo-frontend-10084.azurewebsites.net
+- **Backend API**: https://app-copilot-demo-backend-10084.azurewebsites.net
 - **SQL Server**: sql-copilot-demo-10084.database.windows.net
 
 ---
@@ -91,46 +91,75 @@ This project demonstrates how **GitHub Copilot in VS Code's terminal** transform
 
 ### Prerequisites
 
-- Azure CLI installed and logged in (`az login`)
+- **Azure Developer CLI** (`azd`) installed: https://aka.ms/azd-install
+- **Azure CLI** installed and logged in (`az login`)
 - VS Code with GitHub Copilot extension
-- PowerShell or Bash terminal
+- PowerShell 7+ or Bash terminal
 - Shell integration enabled (already configured)
 
-### Deploy
+### Deploy with Azure Developer CLI (Recommended)
 
 ```powershell
-# Run the deployment script
-.\deploy.ps1
+# Set required Entra ID admin for SQL Server
+$adminUpn = "your-admin@yourtenant.onmicrosoft.com"  # Your Entra ID UPN
+$adminObjectId = az ad user show --id $adminUpn --query id -o tsv
+
+# Provision infrastructure using Bicep
+azd provision --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+```
+
+**What `azd provision` does:**
+1. Validates Bicep templates in `infra/`
+2. Creates/updates Azure resources: App Service Plan, Web Apps, SQL Server (Azure AD auth), Application Insights, Storage Account, Managed Identity
+3. Populates outputs (URLs, keys, database FQDN)
+4. Runs `scripts/azd-post-provision.ps1` to generate `env-config.txt` for backwards compatibility
+
+**Optional: Deploy application code**
+```powershell
+azd deploy
+```
+
+### Deploy with Legacy Script (Deprecated)
+
+```powershell
+# Old method (still supported for backwards compatibility)
+.\scripts\deploy.ps1
 ```
 
 ### Generate Issues for Demo
 
 ```powershell
+# First, ensure env-config.txt is populated from azd outputs
+# (azd post-provision automatically generates this)
+
 # Interactive menu to simulate issues
-.\simulate-issues.ps1
+.\scripts\simulate-issues.ps1
 
 # Or run specific scenarios:
-.\simulate-issues.ps1 -Issue http-errors    # Generate 404/500 errors
-.\simulate-issues.ps1 -Issue high-latency   # Cause slow responses
-.\simulate-issues.ps1 -Issue config-change  # Modify app settings
-.\simulate-issues.ps1 -Issue all-issues     # Run all simulations
-.\simulate-issues.ps1 -Issue clear-issues   # Reset everything
+.\scripts\simulate-issues.ps1 -Issue http-errors    # Generate 404/500 errors
+.\scripts\simulate-issues.ps1 -Issue high-latency   # Cause slow responses
+.\scripts\simulate-issues.ps1 -Issue config-change  # Modify app settings
+.\scripts\simulate-issues.ps1 -Issue all-issues     # Run all simulations
+.\scripts\simulate-issues.ps1 -Issue clear-issues   # Reset everything
 ```
 
 ### Generate Load/Traffic
 
 ```powershell
-# Generate traffic and activity
-.\generate-load.ps1 -Scenario all          # All scenarios
-.\generate-load.ps1 -Scenario traffic      # HTTP traffic only
-.\generate-load.ps1 -Scenario errors       # Error requests only
-.\generate-load.ps1 -Scenario logs         # Generate log entries
+# Generate traffic and activity (populates Application Insights)
+.\scripts\generate-load.ps1 -Scenario all          # All scenarios
+.\scripts\generate-load.ps1 -Scenario traffic      # HTTP traffic only
+.\scripts\generate-load.ps1 -Scenario errors       # Error requests only
+.\scripts\generate-load.ps1 -Scenario logs         # Generate log entries
 ```
 
 ### Cleanup
 
 ```powershell
-# Delete all resources when done
+# Option 1: Use azd (removes all azd-provisioned resources)
+azd down
+
+# Option 2: Use Azure CLI (delete resource group)
 az group delete --name rg-copilot-demo --yes --no-wait
 ```
 

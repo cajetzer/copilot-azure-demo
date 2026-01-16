@@ -1,0 +1,38 @@
+name: copilot-azure-demo
+metadata:
+  description: "Interactive Azure troubleshooting demo with 3-tier application (frontend → backend → SQL)"
+  author: "GitHub Copilot"
+
+services:
+  frontend:
+    project: services/frontend
+    language: js
+    host: appservice
+    
+  backend:
+    project: services/backend
+    language: js
+    host: appservice
+
+infra:
+  path: infra
+
+# Environment variables and outputs from provisioning
+env:
+  # These will be populated by azd from Bicep outputs
+  AZURE_LOCATION: eastus
+  AZURE_RESOURCE_GROUP: rg-copilot-demo
+  ENVIRONMENT_NAME: demo
+
+# Outputs from infra provisioning (mapped from Bicep outputs)
+outputs:
+  FRONTEND_URL:
+    value: ${INFRA_OUTPUTS.frontendUrl}
+  BACKEND_URL:
+    value: ${INFRA_OUTPUTS.backendUrl}
+  APP_INSIGHTS_KEY:
+    value: ${INFRA_OUTPUTS.appInsightsInstrumentationKey}
+  SQL_SERVER_FQDN:
+    value: ${INFRA_OUTPUTS.sqlServerFqdn}
+  STORAGE_ACCOUNT_NAME:
+    value: ${INFRA_OUTPUTS.storageAccountName}

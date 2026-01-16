@@ -1,0 +1,256 @@
+# Copilot Instructions for Azure Troubleshooting Demo
+
+Origin repository: https://github.com/cajetzer/copilot-azure-demo
+
+## 🎯 Project Purpose
+
+This is an **interactive Azure troubleshooting demonstration** that shows how GitHub Copilot in VS Code terminals transforms infrastructure diagnostic workflows from CLI-memorization to natural conversation. The project deploys a 3-tier Azure application (frontend → backend → SQL) with infrastructure-as-code (Bicep) and embedded issues for realistic troubleshooting.
+
+**Target Use Case**: Engineer troubleshoots Azure infrastructure issues conversationally—"Show me HTTP errors" rather than "run az monitor app-insights query with these 4 parameters."
+
+---
+
+## 🏗️ Code Structure
+
+**Infrastructure as Code** (Bicep):
+- `azd.yaml` - Azure Developer CLI project manifest; defines services (frontend/backend), provisioning step, and outputs
+- `infra/main.bicep` - Top-level Bicep template; provisions all Azure resources (Resource Group scoped)
+- `infra/modules/webapp.bicep` - Reusable module for App Service creation with logging and app settings
+- `infra/modules/sql.bicep` - SQL Server and Database provisioning with Managed Identity and Azure AD authentication
+- `infra/parameters.json` - Default parameter values for local development
+
+**Scripts** (all PowerShell in `scripts/` folder):
+- `scripts/deploy.ps1` - **Legacy**; Creates 8 Azure resources via imperative CLI (deprecated; use `azd provision` instead)
+- `scripts/simulate-issues.ps1` - Interactive menu or `-Issue` parameter to create observable problems (errors, latency, restarts, config changes)
+- `scripts/generate-load.ps1` - Parallel HTTP jobs to populate Application Insights with traffic/error data
+- `scripts/azd-post-provision.ps1` - Post-provision hook; converts azd outputs to `env-config.txt` format for backwards compatibility
+
+**Configuration**:
+- `env-config.txt` - Generated once by `azd provision` → `azd-post-provision.ps1`, sourced by simulate/generate scripts. Contains resource names and URLs
+- `.env.local` (optional) - azd local environment file; stores subscription/resource group overrides
+
+**Data Flow**:
+```
+azd provision (Bicep)
+  ↓
+  Azure resources created (Resource Group, App Service Plan, Web Apps, SQL Server with Managed Identity, App Insights, Storage)
+  ↓
+  azd-post-provision.ps1 generates env-config.txt from outputs
+  ↓
+  simulate-issues.ps1 / generate-load.ps1 load env-config.txt
+  ↓
+  User + Copilot terminal: diagnose issues via Azure CLI queries
+```
+
+**Key Design Patterns**: 
+- All resources are cheap tiers (B1 App Service, Basic SQL) to minimize demo costs
+- Resource naming uses deterministic suffix (`uniqueString()` or optional override) to allow parallel, ephemeral demo environments
+- **Managed Identity** (no SQL passwords): Web Apps use User-Assigned Managed Identity for SQL authentication; no secrets in code
+- Infrastructure is declarative (Bicep); scripted troubleshooting remains imperative for realism
+
+---
+
+## 📋 Critical Developer Workflows
+
+### 1. **Infrastructure Provisioning** → `azd provision`
+```powershell
+# Set Entra ID admin for SQL Server (Azure AD authentication, no password)
+$adminUpn = "your-admin@yourtenant.onmicrosoft.com"
+$adminObjectId = az ad user show --id $adminUpn --query id -o tsv
+
+# Provision all resources (Resource Group, App Service Plan, Web Apps, SQL Server, App Insights, Managed Identity)
+azd provision --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+```
+**What happens:**
+- Bicep validates and deploys to Azure
+- Managed Identity is created and assigned to Web Apps
+- SQL Server uses Azure AD authentication (no stored credentials)
+- `azd-post-provision.ps1` auto-generates `env-config.txt`
+
+### 2. **Application Deployment** (Optional) → `azd deploy`
+```powershell
+azd deploy
+```
+- Builds and deploys frontend and backend code to Web Apps
+
+### 3. **Generate Realistic Scenarios** → `scripts/simulate-issues.ps1`
+```powershell
+.\scripts\simulate-issues.ps1 -Issue http-errors        # 404/500 errors
+.\scripts\simulate-issues.ps1 -Issue high-latency       # Slow responses
+.\scripts\simulate-issues.ps1 -Issue app-restart        # Brief outage
+.\scripts\simulate-issues.ps1 -Issue config-change      # Settings modification
+.\scripts\simulate-issues.ps1 -Issue all-issues         # Multiple issues
+.\scripts\simulate-issues.ps1 -Issue clear-issues       # Reset
+```
+- Creates observable problems for Copilot to diagnose
+- **Must run 2-5 min before demo** so Application Insights populates data
+- Issues are *temporary* and reversible (except logs which accumulate)
+
+### 4. **Load/Traffic Generation** → `scripts/generate-load.ps1`
+```powershell
+.\scripts\generate-load.ps1 -Scenario traffic           # HTTP requests
+.\scripts\generate-load.ps1 -Scenario errors            # 404/500s
+.\scripts\generate-load.ps1 -Scenario slow              # High-latency requests
+.\scripts\generate-load.ps1 -Scenario sql               # Database activity
+.\scripts\generate-load.ps1 -Scenario logs              # Log entries
+.\scripts\generate-load.ps1 -Scenario all               # All scenarios
+```
+- Generates activity visible in logs/metrics
+- Used to populate Application Insights before demo (lazy data loading)
+
+### 5. **Cleanup** → Delete resource group
+```powershell
+# Option 1: azd down (recommended; removes all azd-provisioned resources)
+azd down
+
+# Option 2: Azure CLI (alternative; delete entire resource group)
+az group delete --name rg-copilot-demo --yes --no-wait
+```
+- Stops all charges (resources persist for ~1 hour after deletion begins)
+- **CRITICAL**: Demo resources cost ~$15-25 for 5 days if left running
+
+---
+
+## 🔧 Infrastructure Design & Naming
+
+### Resource Naming Strategy
+**Pattern**: Deterministic + Optional Override
+- **Deterministic suffix**: `uniqueString(resourceGroup().id, environment)` → predictable, repeatable names
+- **Optional override**: Pass `--parameter suffix=<value>` to `azd provision` for isolated test runs or CI
+- **Example names** (with environment=demo):
+  - `app-frontend-demo-7a1f`
+  - `app-backend-demo-7a1f`
+  - `sql-demo-7a1f`
+  - `stdemo7a1f` (storage account; all lowercase, no hyphens)
+
+**Why?**
+- Predictable names make scripting, DNS, CORS, and reuse easier
+- Deterministic uniqueness prevents accidental collisions
+- Optional override allows ephemeral CI/demo isolation when needed
+
+### Managed Identity & Security
+**Authentication Strategy**: No stored credentials; uses Azure Managed Identity
+- **Web Apps** (frontend, backend): User-Assigned Managed Identity → SQL Server (Azure AD auth)
+- **SQL Server**: Azure AD-only authentication (no SQL password stored)
+- **Benefits**:
+  - No secrets to rotate or leak
+  - RBAC-friendly for fine-grained permissions
+  - Audit trail via Azure Activity Log
+- **Configuration** (in `infra/main.bicep`):
+  - `sqlAdminPrincipalId`: Entra ID object ID of SQL admin (your user or service principal)
+  - `sqlAdminLogin`: Entra ID UPN (e.g., `user@company.onmicrosoft.com`)
+
+### Resource Breakdown
+
+| Resource | IaC File | Type | Notes |
+|----------|----------|------|-------|
+| Resource Group | main.bicep | Declarative | Scoped by azd |
+| Managed Identity | main.bicep | User-Assigned | Shared by frontend/backend |
+| Storage Account | main.bicep | Standard LRS | Logs, diagnostics |
+| Application Insights | main.bicep | Web component | Full-stack tracing |
+| App Service Plan | main.bicep | B1 Linux | Hosts both web apps |
+| Frontend Web App | modules/webapp.bicep | Node.js 18 | UI + API_URL setting |
+| Backend Web App | modules/webapp.bicep | Node.js 18 | REST API + SQL_CONNECTION_STRING |
+| SQL Server | modules/sql.bicep | Azure AD auth | Managed Identity + Entra ID admin |
+| SQL Database | modules/sql.bicep | Basic (5 DTU) | appdb; max 2 GB |
+| Firewall Rules | modules/sql.bicep | AllowAzureServices | Permits App Service connectivity |
+
+---
+
+## 🔧 Project-Specific Conventions
+
+### Environment Configuration Pattern
+All PowerShell scripts load configuration from `env-config.txt`:
+```powershell
+# Load once at script start (already in simulate-issues.ps1, generate-load.ps1):
+if (Test-Path "env-config.txt") {
+    # Parse env-config.txt into PowerShell variables
+}
+```
+
+**Why**: Avoid hardcoding resource names; `azd-post-provision.ps1` generates unique names. All downstream scripts reference variables from `env-config.txt`.
+
+**Files using this pattern**: [generate-load.ps1](../../generate-load.ps1#L10), [simulate-issues.ps1](../../simulate-issues.ps1#L10)
+
+```instructions
+# Copilot Instructions for Azure Troubleshooting Demo
+
+## Purpose
+
+Concise guidance for AI agents working with this demo repository. Focus: how to use the scripts, where configuration lives, and the minimal troubleshooting steps agents should try before making changes.
+
+## Code Structure
+
+- `deploy.ps1` — deploys resources and writes `env-config.txt` (unique suffixes per run).
+- `simulate-issues.ps1` — creates observable problems (http-errors, high-latency, config changes, restarts).
+- `generate-load.ps1` — generates traffic and telemetry to populate Application Insights.
+- `env-config.txt` — single source of truth for resource names/URLs; always load before running scripts.
+
+## Critical Workflows (copyable)
+
+Deploy:
+```powershell
+.\deploy.ps1
+```
+Simulate issues (example):
+```powershell
+.\simulate-issues.ps1 -Issue all-issues
+```
+Generate load (example):
+```powershell
+.\generate-load.ps1 -Scenario all
+```
+Cleanup:
+```powershell
+az group delete --name $RESOURCE_GROUP --yes --no-wait
+```
+
+## Project Conventions (essentials)
+
+- Scripts parse `env-config.txt` at start; do not hardcode resource names.
+- Output uses visible colors (RED/Green) for errors/completion — scripts favor visibility over silent failures.
+- Resource names use the pattern `{type}-copilot-demo-{SUFFIX}` to avoid collisions.
+
+## Integration Points (short)
+
+- Application Insights: created by `deploy.ps1`; query with `az monitor app-insights query`.
+- Azure SQL: backend gets `SQL_CONNECTION_STRING` from `env-config.txt`; firewall rules added by `deploy.ps1`.
+- Logging: `az webapp log tail --name <app> --resource-group $RESOURCE_GROUP` streams App Service logs.
+- Activity Log: `az monitor activity-log list` shows restarts/config changes.
+
+## Demo Prompts
+
+Use `DEMO-PROMPTS.md` as the authoritative list of Copilot prompts and verified commands.
+
+## Common Pitfalls (quick fixes)
+
+- Missing `env-config.txt`: run `.\deploy.ps1` from the repo root.
+- Empty App Insights responses: run `.\simulate-issues.ps1 -Issue all-issues` and wait 2–5 minutes.
+- SQL firewall issues: re-run `deploy.ps1` or add a rule with `az sql server firewall-rule create`.
+- Unexpected costs: delete the resource group to stop charges.
+
+## Notes for AI Agents
+
+- Preserve demo intent — this repo is for interactive troubleshooting demonstrations.
+- Always load `env-config.txt` before executing commands.
+- Keep edits idempotent and locally verifiable; test `az` commands before committing changes.
+
+## Quick Workflow
+
+1. Load `env-config.txt`.
+2. Ask Copilot a natural question; review the generated `az`/PowerShell command.
+3. Execute and inspect logs/App Insights/activity log.
+
+## Support
+
+Reset simulated issues:
+```powershell
+.\simulate-issues.ps1 -Issue clear-issues
+```
+Tear down demo:
+```powershell
+az group delete --name $RESOURCE_GROUP --yes
+```
+
+```
+| [simulate-issues.ps1](simulate-issues.ps1) | Create observable problems | Interactive menu or `-Issue` parameter, cloud-native issues |

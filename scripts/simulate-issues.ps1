@@ -8,11 +8,25 @@ param(
     [string]$Issue = "menu"
 )
 
-$RESOURCE_GROUP = "rg-copilot-demo"
-$FRONTEND_APP = "app-frontend-10084"
-$BACKEND_APP = "app-backend-10084"
-$SQL_SERVER = "sql-copilot-demo-10084"
-$APP_INSIGHTS = "ai-copilot-demo"
+# Load configuration from env-config.txt if available
+if (Test-Path "env-config.txt") {
+    $config = Get-Content "env-config.txt" | Where-Object { $_ -match '=' -and $_ -notmatch '^#' }
+    $configHash = @{}
+    foreach ($line in $config) {
+        $parts = $line -split '=', 2
+        $configHash[$parts[0].Trim()] = $parts[1].Trim()
+    }
+    
+    $RESOURCE_GROUP = $configHash['RESOURCE_GROUP']
+    $FRONTEND_APP = $configHash['FRONTEND_APP']
+    $BACKEND_APP = $configHash['BACKEND_APP']
+    $SQL_SERVER = $configHash['SQL_SERVER']
+    $APP_INSIGHTS = $configHash['APP_INSIGHTS']
+} else {
+    Write-Host "ERROR: env-config.txt not found!" -ForegroundColor Red
+    Write-Host "Please run deploy.ps1 first to generate the configuration file." -ForegroundColor Yellow
+    exit 1
+}
 
 function Show-Menu {
     Write-Host ""
