@@ -129,26 +129,33 @@ copilot-azure-demo/
 
 ### Deploy with Azure Developer CLI (Recommended)
 
+**Simplest method (no prompts):**
 ```powershell
-# Set required Entra ID admin for SQL Server
-$adminUpn = "your-admin@yourtenant.onmicrosoft.com"  # Your Entra ID UPN
-$adminObjectId = az ad user show --id $adminUpn --query id -o tsv
-
-# One-command deployment: provision infrastructure + deploy apps
-azd up --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+# Uses your logged-in Azure user as SQL admin automatically
+.\azd-deploy.ps1
 ```
 
-**What `azd up` does:**
-1. Validates and provisions infrastructure using Bicep templates in `infra/`
-2. Creates/updates Azure resources: App Service Plan, Web Apps, SQL Server (Azure AD auth), Application Insights, Storage Account, Managed Identity
-3. Deploys application code from `services/frontend` and `services/backend` to Web Apps
-4. Automatically runs `scripts/azd-post-provision.ps1` hook to generate `env-config.txt` for backwards compatibility
-5. Displays live URLs and connection info
+It will:
+1. ✅ Detect your logged-in Azure user
+2. ✅ Use that user as SQL Server admin
+3. ✅ Automatically look up the object ID
+4. ✅ Call `azd up` with all parameters resolved
+5. ✅ Display URLs and next steps
 
 **Alternatively: Provision without deploying code**
 ```powershell
-# Just provision infrastructure; skip app deployment
-azd provision --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+# Provision infrastructure only; skip app deployment
+.\azd-deploy.ps1 -ProvisionOnly
+```
+
+**Advanced: Manual deployment (if you prefer explicit parameters)**
+```powershell
+# Set Entra ID admin for SQL Server
+$adminUpn = "your-admin@yourtenant.onmicrosoft.com"  # Your Entra ID UPN
+$adminObjectId = az ad user show --id $adminUpn --query id -o tsv
+
+# Deploy with explicit parameters
+azd up --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
 ```
 
 ### Deploy with Legacy Script (Deprecated)

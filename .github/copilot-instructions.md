@@ -1,6 +1,8 @@
 # Copilot Instructions for Azure Troubleshooting Demo
 
+## git operations
 Origin repository: https://github.com/cajetzer/copilot-azure-demo
+Never commit to the upstream repo unless explicitly instructed.
 
 ## 🎯 Project Purpose
 
@@ -59,32 +61,40 @@ azd up (or azd provision)
 
 ## 📋 Critical Developer Workflows
 
-### 1. **Full Deployment** → `azd up` (Recommended)
+### 1. **Full Deployment** → `azd-deploy.ps1` (Recommended)
 ```powershell
-# Set Entra ID admin for SQL Server (Azure AD authentication, no password)
-$adminUpn = "your-admin@yourtenant.onmicrosoft.com"
-$adminObjectId = az ad user show --id $adminUpn --query id -o tsv
-
-# One command: provision infrastructure + deploy apps + run post-provision hook
-azd up --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+# Uses your logged-in Azure user as SQL admin automatically
+.\azd-deploy.ps1
 ```
 **What happens:**
+- Detects your logged-in Azure user (from `az login`)
+- Uses that user as SQL Server admin
+- Automatically looks up their Entra ID object ID
 - Bicep validates and deploys all resources to Azure
 - Managed Identity is created and assigned to Web Apps
 - SQL Server uses Azure AD authentication (no stored credentials)
 - Application code from `services/frontend` and `services/backend` is deployed to Web Apps
 - `azd-post-provision.ps1` hook automatically runs → generates `env-config.txt`
+- Live URLs and next steps are displayed
 
-### 2. **Infrastructure-Only Provisioning** → `azd provision`
+**Alternative: Manual deployment (explicit parameters)**
 ```powershell
-# Just provision infrastructure; skip app deployment
-azd provision --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+$adminUpn = "your-admin@yourtenant.onmicrosoft.com"
+$adminObjectId = az ad user show --id $adminUpn --query id -o tsv
+azd up --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+```
+
+### 2. **Infrastructure-Only Provisioning** → `azd-deploy.ps1 -ProvisionOnly`
+```powershell
+# Provision infrastructure only; skip app deployment (no prompts)
+.\azd-deploy.ps1 -ProvisionOnly
 ```
 **What happens:**
+- Uses your logged-in user as SQL Server admin (same as full deployment)
 - Bicep validates and deploys resources only
 - `azd-post-provision.ps1` hook runs automatically
 - `env-config.txt` is generated for backwards compatibility
-- Application code is NOT deployed (useful for debugging Bicep)
+- Application code is NOT deployed (useful for debugging Bicep or deploying separately)
 
 ### 3. **Deploy App Code Only** → `azd deploy`
 ```powershell
@@ -129,7 +139,7 @@ az group delete --name rg-copilot-demo --yes --no-wait
 - Stops all charges (resources persist for ~1 hour after deletion begins)
 - **CRITICAL**: Demo resources cost ~$15-25 for 5 days if left running
 
-### 5. **Cleanup** → Delete resource group
+### 7. **Cleanup** → Delete resource group
 ```powershell
 # Option 1: azd down (recommended; removes all azd-provisioned resources)
 azd down
@@ -223,15 +233,13 @@ Concise guidance for AI agents working with this demo repository. Focus: how to 
 
 ## Critical Workflows (copyable)
 
-Full deployment (infrastructure + code):
+Full deployment (uses logged-in user as SQL admin):
 ```powershell
-$adminUpn = "your-admin@yourtenant.onmicrosoft.com"
-$adminObjectId = az ad user show --id $adminUpn --query id -o tsv
-azd up --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+.\azd-deploy.ps1
 ```
-Provision infrastructure only:
+Provision infrastructure only (uses logged-in user as SQL admin):
 ```powershell
-azd provision --parameter sqlAdminPrincipalId=$adminObjectId --parameter sqlAdminLogin=$adminUpn
+.\azd-deploy.ps1 -ProvisionOnly
 ```
 Redeploy application code:
 ```powershell
@@ -301,5 +309,4 @@ Tear down demo:
 azd down
 ```
 
-```
-| [simulate-issues.ps1](simulate-issues.ps1) | Create observable problems | Interactive menu or `-Issue` parameter, cloud-native issues |
+- [simulate-issues.ps1](simulate-issues.ps1) — Create observable problems via interactive menu or `-Issue` parameter (cloud-native issues).
